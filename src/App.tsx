@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Cat } from 'lucide-react';
+import { Cat, Trophy } from 'lucide-react';
 import { FeedPlayer } from './components/FeedPlayer';
+import { AchievementsDrawer } from './components/AchievementsDrawer';
 
 type FilterMode = 'all' | 'videos' | 'gifs';
 
 function App() {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
 
   return (
     <>
@@ -38,13 +40,22 @@ function App() {
           </button>
         </nav>
 
-        {/* Empty placeholder to balance out logo/tabs flexbox layout */}
-        <div style={{ width: '48px' }} />
+        <button 
+          className="trophy-btn" 
+          onClick={() => setIsAchievementsOpen(true)}
+          aria-label="View Achievements"
+        >
+          <Trophy size={18} />
+        </button>
       </header>
 
       <main>
         <FeedPlayer filterMode={filterMode} />
       </main>
+
+      {isAchievementsOpen && (
+        <AchievementsDrawer onClose={() => setIsAchievementsOpen(false)} />
+      )}
     </>
   );
 }

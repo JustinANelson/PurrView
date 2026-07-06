@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Heart, Bookmark, Share2, Info, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Heart, Bookmark, Share2, Info, Volume2, VolumeX, Play, Pause, MessageSquare } from 'lucide-react';
 import type { CatReelItem } from '../data/videoData';
+import { playMeowSound } from '../utils/audioHelper';
+import { CommentsDrawer } from './CommentsDrawer';
 
 interface ReelCardProps {
   item: CatReelItem;
@@ -32,6 +34,19 @@ export const ReelCard: React.FC<ReelCardProps> = ({
   const [progress, setProgress] = useState(0);
   const [heartAnims, setHeartAnims] = useState<{ id: number; x: number; y: number }[]>([]);
   const [showPlayStateOverlay, setShowPlayStateOverlay] = useState<'play' | 'pause' | null>(null);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+
+  const cleanId = item.id.split('_')[0];
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`comments_${cleanId}`);
+    if (saved) {
+      setCommentCount(JSON.parse(saved).length);
+    } else {
+      setCommentCount(cleanId.startsWith('v') ? 2 : 1);
+    }
+  }, [item.id, cleanId]);
 
   // Sync video play/pause with isActive state
   useEffect(() => {
@@ -117,6 +132,9 @@ export const ReelCard: React.FC<ReelCardProps> = ({
     if (!isLiked) {
       onLikeToggle(item.id);
     }
+    
+    // Play synthesized meow sound!
+    playMeowSound();
 
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -133,10 +151,12 @@ export const ReelCard: React.FC<ReelCardProps> = ({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const deepLink = `${window.location.origin}?reel=${item.id}`;
+    
     const shareData = {
       title: 'Check out this awesome cat!',
       text: item.caption,
-      url: item.url
+      url: deepLink
     };
 
     if (navigator.share) {
@@ -147,7 +167,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
       }
     } else {
       // Fallback
-      navigator.clipboard.writeText(item.url);
+      navigator.clipboard.writeText(deepLink);
       alert('Link copied to clipboard! 🐾');
     }
   };
@@ -256,6 +276,15 @@ export const ReelCard: React.FC<ReelCardProps> = ({
           </span>
         </button>
 
+        <button
+          className="control-btn comment-btn"
+          onClick={() => setIsCommentsOpen(true)}
+          aria-label="Open comments"
+        >
+          <MessageSquare size={28} />
+          <span className="control-count">{commentCount.toLocaleString()}</span>
+        </button>
+
         <button className="control-btn share-btn" onClick={handleShare} aria-label="Share video">
           <Share2 size={28} />
           <span className="control-count">Share</span>
@@ -282,6 +311,16 @@ export const ReelCard: React.FC<ReelCardProps> = ({
         <div className="reel-progress-container">
           <div className="reel-progress-bar" style={{ width: `${progress}%` }}></div>
         </div>
+      )}
+
+      {isCommentsOpen && (
+        <CommentsDrawer itemId={item.id} onClose={() => {
+          setIsCommentsOpen(false);
+          const saved = localStorage.getItem(`comments_${cleanId}`);
+          if (saved) {
+            setCommentCount(JSON.parse(saved).length);
+          }
+        }} />
       )}
     </div>
   );
