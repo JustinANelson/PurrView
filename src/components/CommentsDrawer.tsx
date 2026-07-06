@@ -95,7 +95,10 @@ export const CommentsDrawer: React.FC<CommentsDrawerProps> = ({ itemId, onClose 
   };
 
   return (
-    <div className="comments-backdrop" onClick={onClose}>
+    <div className="comments-backdrop" onClick={(e) => {
+      e.stopPropagation();
+      onClose();
+    }}>
       <div className="comments-content" onClick={(e) => e.stopPropagation()}>
         <div className="comments-header">
           <h3>Comments ({comments.length})</h3>

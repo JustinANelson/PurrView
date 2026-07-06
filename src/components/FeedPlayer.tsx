@@ -45,15 +45,11 @@ export const FeedPlayer: React.FC<FeedPlayerProps> = ({ filterMode }) => {
 
   // Helper to compute the user's favorite breed based on liked cards
   const getPreferredBreedId = useCallback(() => {
-    const likedList = Array.from(likedIds);
+    const likedBreeds = JSON.parse(localStorage.getItem('cat_reels_liked_breeds') || '[]');
     const breedCounts: Record<string, number> = {};
 
-    likedList.forEach((id) => {
-      const cleanId = id.split('_')[0];
-      const match = items.find(item => item.id.startsWith(cleanId)) || curatedCatVideos.find(v => v.id === cleanId);
-      if (match && match.breed) {
-        breedCounts[match.breed.id] = (breedCounts[match.breed.id] || 0) + 1;
-      }
+    likedBreeds.forEach((breedId: string) => {
+      breedCounts[breedId] = (breedCounts[breedId] || 0) + 1;
     });
 
     let bestBreed: string | null = null;
@@ -66,7 +62,7 @@ export const FeedPlayer: React.FC<FeedPlayerProps> = ({ filterMode }) => {
     });
 
     return bestBreed;
-  }, [likedIds, items]);
+  }, []);
 
   // Fetch from Cat API to grow list infinitely
   const fetchCatApiItems = useCallback(async (limit = 10, mode: 'all' | 'videos' | 'gifs' = 'all') => {
@@ -349,10 +345,25 @@ export const FeedPlayer: React.FC<FeedPlayerProps> = ({ filterMode }) => {
   const handleLikeToggle = (id: string) => {
     setLikedIds((prev) => {
       const next = new Set(prev);
+      const match = items.find(item => item.id === id);
+      
       if (next.has(id)) {
         next.delete(id);
+        if (match && match.breed) {
+          const likedBreeds = JSON.parse(localStorage.getItem('cat_reels_liked_breeds') || '[]');
+          const idx = likedBreeds.indexOf(match.breed.id);
+          if (idx !== -1) {
+            likedBreeds.splice(idx, 1);
+            localStorage.setItem('cat_reels_liked_breeds', JSON.stringify(likedBreeds));
+          }
+        }
       } else {
         next.add(id);
+        if (match && match.breed) {
+          const likedBreeds = JSON.parse(localStorage.getItem('cat_reels_liked_breeds') || '[]');
+          likedBreeds.push(match.breed.id);
+          localStorage.setItem('cat_reels_liked_breeds', JSON.stringify(likedBreeds));
+        }
       }
       return next;
     });

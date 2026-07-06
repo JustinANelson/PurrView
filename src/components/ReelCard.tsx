@@ -278,7 +278,10 @@ export const ReelCard: React.FC<ReelCardProps> = ({
 
         <button
           className="control-btn comment-btn"
-          onClick={() => setIsCommentsOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsCommentsOpen(true);
+          }}
           aria-label="Open comments"
         >
           <MessageSquare size={28} />
